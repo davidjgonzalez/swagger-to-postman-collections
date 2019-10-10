@@ -1,0 +1,27 @@
+{
+  "name": "swagger-to-postman-collections",
+  "version": "1.0.0",
+  "description": "A module to convert swagger 2.0 YAML files to Postman Collection Format v2.0.1",
+  "main": "app.js",
+  "scripts": {
+    "convert": "node app.js --input .",
+    "test": "scripts/test.sh"
+  },
+  "dependencies": {
+    "jsface": "^2.2.0",
+    "postman-collection-transformer": "^3.2.0",
+    "uuid": "^3.2.1",
+    "yargs": "^14.2.0"
+  },
+  "keywords": [
+    "swagger",
+    "postman"
+  ],
+  "license": "Apache 2.0",
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "jscs": "^2.1.0",
+    "jshint": "^2.8.0",
+    "mocha": "^2.2.5"
+  }
+}

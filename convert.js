@@ -33,6 +33,8 @@ var uuidv4 = require('uuid/v4'),
 
             this.options = options || {};
             this.transforms = this.options.transforms || {};
+            this.basePath = this.options.basePath || {};
+            this.forcedParams = this.options.forcedParams || [];
 
             this.options.includeQueryParams = typeof (this.options.includeQueryParams) == 'undefined' ?
                 true : this.options.includeQueryParams;
@@ -88,8 +90,12 @@ var uuidv4 = require('uuid/v4'),
             if (json.host) {
                 this.basePath = json.host;
             }
+
             if (json.basePath) {
-                this.basePath += json.basePath;
+                this.options.basePath += json.basePath;
+            } else if (this.options.basePath[json.info.title]) {
+                // Set basePath using param transforms for any Swagger Spec  missing the basePath (ideally this is added INTO the swagger spec yaml)
+                this.basePath += this.options.basePath[json.info.title];
             }
 
             if (this.options.scheme === 'https' || (json.schemes && json.schemes.indexOf('https') != -1)) {
@@ -191,6 +197,7 @@ var uuidv4 = require('uuid/v4'),
             }
 
             params = params || [];
+
             numParams = params.length;
 
             for (i = 0; i < numParams; i++) {
@@ -214,7 +221,7 @@ var uuidv4 = require('uuid/v4'),
             var root = this,
                 request = {
                     'id': uuidv4(),
-                    'headers': '',
+                    'headers': [],
                     'url': '',
                     'pathVariables': {},
                     'preRequestScript': '',
@@ -286,16 +293,45 @@ var uuidv4 = require('uuid/v4'),
             }
 
             if (thisProduces.length > 0) {
-                request.headers += 'Accept: ' + thisProduces.join(', ') + '\n';
+                request.headers.push({
+                    'key': 'Accept',
+                    'value': thisProduces.join(', ')
+                });
             }
+
             if (thisConsumes.length > 0) {
-                request.headers += 'Content-Type: ' + thisConsumes[0] + '\n';
+                request.headers.push({
+                    'key': 'Content-Type',
+                    'value': thisConsumes[0]
+                });
             }
+
+            for (i = 0; i < this.forcedParams.length; i++) {
+                var forcedParam = this.forcedParams[i];
+
+                if (!forcedParam) {
+                    continue;
+                }
+
+                var addByForce = true;
+                for (param in thisParams) {
+                    if (thisParams.hasOwnProperty(param) && thisParams[param]) {
+                        if (thisParams[param].in === forcedParam.in &&
+                            thisParams[param].name === forcedParam.name) {
+                                addByForce = false;
+                                break;
+                            }
+                    }
+                }
+
+                if (addByForce) {
+                    thisParams[forcedParam.name + '_ForcedParam'] = forcedParam;
+                }
+            };
 
             // set data and headers
             for (param in thisParams) {
                 if (thisParams.hasOwnProperty(param) && thisParams[param]) {
-                    this.logger('Processing param: ' + JSON.stringify(param));
 
                     if (thisParams[param].in === 'query' && this.options.includeQueryParams !== false) {
                         if (!hasQueryParams) {
@@ -306,13 +342,17 @@ var uuidv4 = require('uuid/v4'),
                         request.url += thisParams[param].name +
                             '=' +
                             this.getPostmanVariable(thisParams, param, transforms.query) +
-                            '&';
+                            '&';                        
                     }
                     else if (thisParams[param].in === 'header') {
-                        request.headers += thisParams[param].name +
-                            ': ' +
-                            this.getPostmanVariable(thisParams, param, transforms.header) +
-                            '\n';
+                        request.headers.push({
+                            'key': thisParams[param].name,
+                            'value': this.getPostmanVariable(thisParams, param, transforms.header),
+                            'description': thisParams[param].description || '',
+                            'type': thisParams[param].type || 'string',
+                            'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
+                        });
+                        
                     }
                     else if (thisParams[param].in === 'body') {
                         request.dataMode = 'raw';
@@ -328,6 +368,7 @@ var uuidv4 = require('uuid/v4'),
                         request.data.push({
                             'key': thisParams[param].name,
                             'value': this.getPostmanVariable(thisParams, param, transforms.formData),
+                            'description': thisParams[param].description || '',
                             'type': 'text',
                             'enabled': true
                         });
@@ -355,7 +396,7 @@ var uuidv4 = require('uuid/v4'),
             }
         },
 
-        addPathItemToFolder: function (path, pathItem, ) { //folderName) {
+        addPathItemToFolder: function (path, pathItem) {
             if (pathItem.$ref) {
                 this.logger('Error - cannot handle $ref attributes');
                 return;
@@ -400,8 +441,7 @@ var uuidv4 = require('uuid/v4'),
             // Add a folder for each path
             for (path in paths) {
                 if (paths.hasOwnProperty(path)) {
-                    //folderName = this.getFolderNameForPath(paths[path], path);
-                    //this.logger('Adding path item. path = ' + path + ' folder = ' + folderName);
+                    //this.logger('Adding path item. path = ' + path + ' folder = ' + this.getFolderNameForPath(paths[path], path));
 
                     // Update a specific Operations parameters with any parent Resource parameters.
                     this.resourceParams = [];

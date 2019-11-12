@@ -47,7 +47,8 @@ function execute(inputFilePath, outputDirectory) {
                     header: {
                         'x-api-key': '{{API_KEY}}', // Header
                         'x-gw-ims-org-id': '{{IMS_ORG}}', // Header
-                        'Authorization': 'Bearer {{ACCESS_TOKEN}}' // Header
+                        'Authorization': 'Bearer {{ACCESS_TOKEN}}', // Header
+                        'x-sandbox-name': '{{SANDBOX_NAME}}' // Sandbox name (prod, or custom)
                     },
                     formData: {
                         'client_id': '{{API_KEY}}',
@@ -57,20 +58,43 @@ function execute(inputFilePath, outputDirectory) {
                         'meta_scopes': '{{META_SCOPE}}',
                         'private_key': '{{PRIVATE_KEY}}'
                     }
-                }
+                },
+                basePath: {
+                    // Missing bathPath attribute in swagger spec; mapping via Title
+                    'Mapping Service API Resource': '/data/foundation/connectors',
+                    'Observability Insights': '/data/infrastructure/observability/insights',
+                    'Schema Registry API': '/data/foundation/schemaregistry'
+                }, 
+                forcedParams: [
+                    {
+                        name: 'x-sandbox-name',
+                        in: 'header',
+                        required: false,
+                        description: 'Identifies the Adobe Experience Platform sandbox to use. Default sandbox is \'prod\'',
+                        type: 'string',
+                        enabled: false
+                    }
+                ]                
             }),
             conversionResult;
 
         fs.readFile(inputFilePath, (err, data) => {
             if (err) throw err;
 
-            //swaggerConverter.setLogger(console.log);
             conversionResult = swaggerConverter.convert(yaml.safeLoad(data));
 
             if (conversionResult.status === "passed") {
 
                 fileNameWithoutExtension = conversionResult.collection.name || fileNameWithoutExtension;
-                var outputFileName = path.resolve('./' + outputDirectory + '/' + fileNameWithoutExtension + '.postman_collection.json');
+                var outputFileName = '';
+                
+                if (outputDirectory.indexOf('/') === 0) {
+                    // Is absolute path
+                    outputFileName = path.resolve(outputDirectory + '/' + fileNameWithoutExtension + '.postman_collection.json');
+                } else {
+                    // Is relative path
+                    outputFileName = path.resolve('./' + outputDirectory + '/' + fileNameWithoutExtension + '.postman_collection.json');
+                }
 
                 if (fs.existsSync(outputFileName)) {
                     fs.unlinkSync(outputFileName);

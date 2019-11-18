@@ -72,7 +72,8 @@ function execute(inputFilePath, outputDirectory) {
                         required: false,
                         description: 'Identifies the Adobe Experience Platform sandbox to use. Default sandbox is \'prod\'',
                         type: 'string',
-                        enabled: false
+                        enabled: true,
+                        preRequestScript: 'if (!pm.environment.has("SANDBOX-NAME")) { pm.request.headers.remove("x-sandbox-name"); }'
                     }
                 ]                
             }),

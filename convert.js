@@ -285,7 +285,7 @@ var uuidv4 = require('uuid/v4'),
             if (operation.consumes) {
                 thisConsumes = operation.consumes;
             }
-
+            
             // set the default dataMode for this request, even if it doesn't have a body
             // eg. for GET requests
             if (thisConsumes.indexOf('application/x-www-form-urlencoded') > -1) {
@@ -295,14 +295,14 @@ var uuidv4 = require('uuid/v4'),
             if (thisProduces.length > 0) {
                 request.headers.push({
                     'key': 'Accept',
-                    'value': thisProduces.join(', ')
+                    'value': 'application/vnd.adobe.xed+json' //thisProduces.join(', ')
                 });
             }
 
             if (thisConsumes.length > 0) {
                 request.headers.push({
                     'key': 'Content-Type',
-                    'value': thisConsumes[0]
+                    'value': 'application/json'//thisConsumes[0]
                 });
             }
 
@@ -326,6 +326,8 @@ var uuidv4 = require('uuid/v4'),
 
                 if (addByForce) {
                     thisParams[forcedParam.name + '_ForcedParam'] = forcedParam;
+
+                    request.preRequestScript += forcedParam.preRequestScript || '';
                 }
             };
 
@@ -345,14 +347,16 @@ var uuidv4 = require('uuid/v4'),
                             '&';                        
                     }
                     else if (thisParams[param].in === 'header') {
-                        request.headers.push({
-                            'key': thisParams[param].name,
-                            'value': this.getPostmanVariable(thisParams, param, transforms.header),
-                            'description': thisParams[param].description || '',
-                            'type': thisParams[param].type || 'string',
-                            'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
-                        });
-                        
+                        // Skip these Headers as they are always forced to be what they
+                        if (['Accept', 'Content-Type'].indexOf(thisParams[param].name) === -1) {
+                            request.headers.push({
+                                'key': thisParams[param].name,
+                                'value': this.getPostmanVariable(thisParams, param, transforms.header),
+                                'description': thisParams[param].description || '',
+                                'type': thisParams[param].type || 'string',
+                                'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
+                            });
+                        }                        
                     }
                     else if (thisParams[param].in === 'body') {
                         request.dataMode = 'raw';

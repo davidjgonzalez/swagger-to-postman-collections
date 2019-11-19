@@ -92,7 +92,7 @@ var uuidv4 = require('uuid/v4'),
             }
 
             if (json.basePath) {
-                this.options.basePath += json.basePath;
+                this.basePath += json.basePath;
             } else if (this.options.basePath[json.info.title]) {
                 // Set basePath using param transforms for any Swagger Spec  missing the basePath (ideally this is added INTO the swagger spec yaml)
                 this.basePath += this.options.basePath[json.info.title];
@@ -224,7 +224,7 @@ var uuidv4 = require('uuid/v4'),
                     'headers': [],
                     'url': '',
                     'pathVariables': {},
-                    'preRequestScript': '',
+                    'preRequestScript': this.options.preRequestScript,
                     'method': 'GET',
                     'data': [],
                     'rawModeData': null,
@@ -308,6 +308,7 @@ var uuidv4 = require('uuid/v4'),
 
             for (i = 0; i < this.forcedParams.length; i++) {
                 var forcedParam = this.forcedParams[i];
+                    forcedParam.forced = true;
 
                 if (!forcedParam) {
                     continue;
@@ -316,18 +317,15 @@ var uuidv4 = require('uuid/v4'),
                 var addByForce = true;
                 for (param in thisParams) {
                     if (thisParams.hasOwnProperty(param) && thisParams[param]) {
-                        if (thisParams[param].in === forcedParam.in &&
-                            thisParams[param].name === forcedParam.name) {
-                                addByForce = false;
-                                break;
-                            }
+                        if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
+                            addByForce = false;
+                            break;
+                        }
                     }
                 }
 
                 if (addByForce) {
-                    thisParams[forcedParam.name + '_ForcedParam'] = forcedParam;
-
-                    request.preRequestScript += forcedParam.preRequestScript || '';
+                    thisParams[forcedParam.name] = forcedParam;
                 }
             };
 
@@ -335,6 +333,13 @@ var uuidv4 = require('uuid/v4'),
             for (param in thisParams) {
                 if (thisParams.hasOwnProperty(param) && thisParams[param]) {
 
+                    for (i = 0; i < (this.options.blacklistedParams || []).length; i++) {
+                        var blacklistedParam = this.options.blacklistedParams[i];
+                        if ((thisParams[param].in === blacklistedParam.in && thisParams[param].name === blacklistedParam.name)) {
+                            return;
+                        }
+                    }
+        
                     if (thisParams[param].in === 'query' && this.options.includeQueryParams !== false) {
                         if (!hasQueryParams) {
                             hasQueryParams = true;

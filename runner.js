@@ -61,9 +61,23 @@ function execute(inputFilePath, outputDirectory) {
                 },
                 basePath: {
                     // Missing bathPath attribute in swagger spec; mapping via Title
+                    'Schema Registry API': '/data/foundation/schemaregistry',
+                    'Catalog Service API': '/data/foundation/catalog',
+                    'Partner Connectors API': '/data/foundation/connectors',
+                    'Data Ingestion API': '/data/foundation/import',
+                    'Data Access API': '/data/foundation/export',
+                    'DULE Policy Service': '/data/foundation/dulepolicy',
+                    'Privacy Service API': '/data/core/privacy/jobs',
+                    'Real-time Customer Profile API': '/data/core/ups',
+                    'Identity Service': '/data/core',
+                    'Query Service API': '/data/foundation/query',
+                    'XDM Core Object Repository API': '/data/core/xcore',
+                    'Offer Decision Service API': '/data/core/ode',
+                    'Sensei Machine Learning API': '/data/sensei',
+                    'Access Control API': '/data/foundation/access-control',
                     'Mapping Service API Resource': '/data/foundation/connectors',
                     'Observability Insights': '/data/infrastructure/observability/insights',
-                    'Schema Registry API': '/data/foundation/schemaregistry'
+                    'Sandbox API': '/data/foundation/sandbox-management'
                 }, 
                 forcedParams: [
                     {
@@ -72,10 +86,31 @@ function execute(inputFilePath, outputDirectory) {
                         required: false,
                         description: 'Identifies the Adobe Experience Platform sandbox to use. Default sandbox is \'prod\'',
                         type: 'string',
-                        enabled: true,
-                        preRequestScript: 'if (!pm.environment.has("SANDBOX-NAME")) { pm.request.headers.remove("x-sandbox-name"); }'
+                        enabled: true
+                    },
+                ],
+                blacklistedParams: [  
+                    {
+                        name: 'x-sandbox-id',
+                        in: 'header',
                     }
-                ]                
+                ],
+                preRequestScript: 
+`/** Begin Adobe-provided Pre-Request Scripts **/
+// Do not send HTTP Headers with empty variables, as Postman will send the literal variable name
+pm.request.headers.each(header => {
+    if (header.value.startsWith("{{") && header.value.endsWith("}}")) {
+        if (!pm.variables.get(header.value.substring(2, header.value.length - 2))) { pm.request.headers.remove(header.key); }
+    }
+});
+
+// Do not send HTTP URL Query Parameters with empty variables, as Postman will send the literal variable name
+pm.request.url.query.remove(q => { 
+    if (q.value.startsWith("{{") && q.value.endsWith("}}")) {
+        return !pm.variables.get(q.value.substring(2, q.value.length - 2));
+    } 
+});
+/** End Adobe-provided Pre-Request Scripts **/`
             }),
             conversionResult;
 

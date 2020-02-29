@@ -297,14 +297,14 @@ var uuidv4 = require('uuid/v4'),
             if (thisProduces.length > 0) {
                 request.headers.push({
                     'key': 'Accept',
-                    'value': 'application/vnd.adobe.xed+json' //thisProduces.join(', ')
+                    'value': thisProduces.join(', ') //'application/vnd.adobe.xed+json' 
                 });
             }
 
             if (thisConsumes.length > 0) {
                 request.headers.push({
                     'key': 'Content-Type',
-                    'value': 'application/json'//thisConsumes[0]
+                    'value': thisConsumes[0] //'application/json'
                 });
             }
 

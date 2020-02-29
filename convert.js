@@ -89,6 +89,8 @@ var uuidv4 = require('uuid/v4'),
             this.basePath = '';
             if (json.host) {
                 this.basePath = json.host;
+            } else {
+                this.basePath = 'platform.adobe.io';
             }
 
             if (json.basePath) {

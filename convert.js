@@ -223,7 +223,7 @@ var uuidv4 = require('uuid/v4'),
         addOperationToFolder: function (path, method, operation, folderName) {
             var root = this,
                 request = {
-                    'id': getUuid('aep__' + path + '__' + method + '__' + operations + '__' + folderName + '__' + root.collectionId), //uuidv4(),
+                    'id': getUuid('aep__' + path + '__' + method + '__' + operation + '__' + folderName + '__' + root.collectionId), //uuidv4(),
                     'headers': [],
                     'url': '',
                     'pathVariables': {},

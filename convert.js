@@ -1,4 +1,5 @@
 var uuidv4 = require('uuid/v4'),
+    getUuid = require('uuid-by-string'),
     jsface = require('jsface'),
     url = require('url'),
     META_KEY = 'x-postman-meta',
@@ -166,7 +167,7 @@ var uuidv4 = require('uuid/v4'),
             });
 
             var newFolder = {
-                'id': uuidv4(),
+                'id': getUuid('aep__' + name + '__' + this.collectionId), //uuidv4(),
                 'name': name,
                 'description': description,
                 'order': [],
@@ -222,7 +223,7 @@ var uuidv4 = require('uuid/v4'),
         addOperationToFolder: function (path, method, operation, folderName) {
             var root = this,
                 request = {
-                    'id': uuidv4(),
+                    'id': getUuid('aep__' + path + '__' + method + '__' + operations + '__' + folderName + '__' + root.collectionId), //uuidv4(),
                     'headers': [],
                     'url': '',
                     'pathVariables': {},
@@ -501,7 +502,7 @@ var uuidv4 = require('uuid/v4'),
                 return validationResult;
             }
 
-            this.collectionId = uuidv4();
+            this.collectionId = getUuid('aep__' + json.info.title); //uuidv4();
 
             this.globalConsumes = json.consumes || [];
 

@@ -295,11 +295,51 @@ var uuidv4 = require('uuid/v4'),
                 request.dataMode = 'urlencoded';
             }
 
+
+            for (i = 0; i < this.forcedParams.length; i++) {
+                var forcedParam = this.forcedParams[i],
+                    apiPathId = '/' + this.basePath.split('/').slice(3).join('/');
+                    apiPathId = apiPathId.substring(0, apiPathId.length - 1); 
+        
+
+                if (!forcedParam) {
+                    continue;
+                }
+
+                forcedParam.forced = true;
+
+                var addByForce = true;
+                for (param in thisParams) {
+                    if (thisParams.hasOwnProperty(param) && thisParams[param]) {
+                        if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
+                            if (forcedParam.overwrite(apiPathId, path, method)) {
+                                break;
+                            } else {
+                                addByForce = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (addByForce) {
+                    thisParams[forcedParam.id] = forcedParam;
+                }
+            };
+
+
+
             if (thisProduces.length > 0) {
-                request.headers.push({
-                    'key': 'Accept',
-                    'value': thisProduces.join(', ') //'application/vnd.adobe.xed+json' 
-                });
+                console.log(thisParams);
+
+                var acceptHeader = thisParams['accept'];
+
+                if (!acceptHeader || acceptHeader.in !== 'header') {
+                    request.headers.push({
+                        'key': 'Accept',
+                        'value': thisProduces.join(', ') //'application/vnd.adobe.xed+json' 
+                    });
+                }
             }
 
             if (thisConsumes.length > 0) {
@@ -308,29 +348,6 @@ var uuidv4 = require('uuid/v4'),
                     'value': thisConsumes[0] //'application/json'
                 });
             }
-
-            for (i = 0; i < this.forcedParams.length; i++) {
-                var forcedParam = this.forcedParams[i];
-                    forcedParam.forced = true;
-
-                if (!forcedParam) {
-                    continue;
-                }
-
-                var addByForce = true;
-                for (param in thisParams) {
-                    if (thisParams.hasOwnProperty(param) && thisParams[param]) {
-                        if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
-                            addByForce = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (addByForce) {
-                    thisParams[forcedParam.name] = forcedParam;
-                }
-            };
 
             // set data and headers
             for (param in thisParams) {
@@ -355,8 +372,8 @@ var uuidv4 = require('uuid/v4'),
                             '&';                        
                     }
                     else if (thisParams[param].in === 'header') {
-                        // Skip these Headers as they are always forced to be what they
-                        if (['Accept', 'Content-Type'].indexOf(thisParams[param].name) === -1) {
+                        // Skip these Headers as they are always forced to be what they (removed Accept incase it was forced)
+                        if (['Content-Type'].indexOf(thisParams[param].name) === -1) {                            
                             request.headers.push({
                                 'key': thisParams[param].name,
                                 'value': this.getPostmanVariable(thisParams, param, transforms.header),
@@ -447,9 +464,8 @@ var uuidv4 = require('uuid/v4'),
         handlePaths: function (json) {
             var i,
                 paths = json.paths,
-                path,
-                folderName;
-
+                path;
+                
             // Add a folder for each path
             for (path in paths) {
                 if (paths.hasOwnProperty(path)) {

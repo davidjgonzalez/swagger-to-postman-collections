@@ -12,4 +12,4 @@ This is a command line invoked npm module that converts Swagger 2.0 YAML Spaces 
 
 To invoke...
 
-`$ ./apps --input /path/to/yaml/specs --output /path/to/save/postman-collections`
+`$ ./app.js --input /path/to/yaml/specs --output /path/to/save/postman-collections`

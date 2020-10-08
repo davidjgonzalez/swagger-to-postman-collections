@@ -11,17 +11,14 @@ const yaml = require('js-yaml'),
 
 function executeOnFile(inputFile, outputDirectory) {
     var fileName = path.resolve(__dirname, inputFile);
-
     execute(fileName, outputDirectory);
 }
 
 function executeOnDirectory(inputDirectory, outputDirectory) {
-
     var directoryName = path.resolve(__dirname, inputDirectory);
 
     fs.readdir(directoryName, function (err, fileNames) {
         if (err) throw err;
-
         fileNames.forEach(fileName => {
             execute(path.resolve(directoryName, fileName), outputDirectory);
         });
@@ -81,13 +78,44 @@ function execute(inputFilePath, outputDirectory) {
                 }, 
                 forcedParams: [
                     {
+                        id: 'x-sandbox-name',
                         name: 'x-sandbox-name',
                         in: 'header',
                         required: false,
                         description: 'Identifies the Adobe Experience Platform sandbox to use. Default sandbox is \'prod\'',
                         type: 'string',
-                        enabled: true
+                        enabled: true,
+                        overwrite: function() { return false; }
                     },
+                    {
+                        id: 'accept',
+                        name: 'Accept',
+                        in: 'header',
+                        default: 'application/vnd.adobe.xed+json; version=1',
+                        required: true,
+                        type: 'string',
+                        enabled: true, 
+                        overwrite: function(apiPathId, path, method) { 
+                            return apiPathId === '/data/foundation/schemaregistry' && 
+                                    method === 'GET' && 
+                                    path.indexOf('$id') > -1; //contains $id
+
+                        }
+                    },
+                    {
+                        id: 'accept',
+                        name: 'Accept',
+                        in: 'header',
+                        default: 'application/vnd.adobe.xed-id+json',
+                        required: true,
+                        type: 'string',
+                        enabled: true, 
+                        overwrite: function(apiPathId, path, method) { 
+                            return apiPathId === '/data/foundation/schemaregistry' && 
+                                    method === 'GET' && 
+                                    path.indexOf('$id') === -1; // does NOT contain $id
+                        }
+                    }
                 ],
                 blacklistedParams: [  
                     {

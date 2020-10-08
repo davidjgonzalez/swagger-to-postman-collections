@@ -90,30 +90,28 @@ function execute(inputFilePath, outputDirectory) {
                     {
                         id: 'accept',
                         name: 'Accept',
+                        description: 'The desired response format (application/vnd.adobe.xed-full+json; version=1). \'Version\' is required.',
                         in: 'header',
                         default: 'application/vnd.adobe.xed+json; version=1',
                         required: true,
-                        type: 'string',
-                        enabled: true, 
                         overwrite: function(apiPathId, path, method) { 
                             return apiPathId === '/data/foundation/schemaregistry' && 
                                     method === 'GET' && 
-                                    path.indexOf('$id') > -1; //contains $id
+                                    path.indexOf('$id') > -1; //contains $id -- (GET + :id) endpoints would be: application/vnd.adobe.xed+json; version=1
 
                         }
                     },
                     {
                         id: 'accept',
                         name: 'Accept',
+                        description: 'The desired response format (application/vnd.adobe.xed-full+json).',
                         in: 'header',
                         default: 'application/vnd.adobe.xed-id+json',
                         required: true,
-                        type: 'string',
-                        enabled: true, 
                         overwrite: function(apiPathId, path, method) { 
                             return apiPathId === '/data/foundation/schemaregistry' && 
                                     method === 'GET' && 
-                                    path.indexOf('$id') === -1; // does NOT contain $id
+                                    path.indexOf('$id') === -1; // does NOT contain $id -- (GET) endpoints would be: application/vnd.adobe.xed-id+json
                         }
                     }
                 ],

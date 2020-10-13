@@ -321,13 +321,7 @@ var uuidv4 = require('uuid/v4'),
                 for (param in thisParams) {
                     if (thisParams[param]) {                        
                         if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
-                        
-                            if (forcedParam.overwrite(apiPathId, path, method)) {                              
-                                thisParams[param] = forcedParam;                        
-                                break;
-                            } else {
-                                break;
-                            }
+                            thisParams[param] = forcedParam;                        
                         }
                     }
                 }
@@ -359,25 +353,27 @@ var uuidv4 = require('uuid/v4'),
                         // Skip these Headers as they are always forced to be what they (removed Accept incase it was forced)
                         if (['Content-Type'].indexOf(thisParams[param].name) === -1) {        
                        
-                            var addedHeader = false;
+                            var overwroteHeader = false;
                             for (var hi = 0; hi < request.headers.length; hi++) {
                                 if (thisParams[param].name === request.headers[hi].key) {
 
-                                    // Overwrite existing headers
-                                    request.headers[hi] = {
-                                        'key': thisParams[param].name,
-                                        'value': this.getPostmanVariable(thisParams, param, transforms.header),
-                                        'description': thisParams[param].description || '',
-                                        'type': thisParams[param].type || 'string',
-                                        'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
-                                    };
-                                    
-                                    addedHeader = true;
-                                    break;
+                                    if (thisParams[param].overwrite && thisParams[param].overwrite(apiPathId, path, method)) {                              
+                                        // Overwrite existing headers
+                                        request.headers[hi] = {
+                                            'key': thisParams[param].name,
+                                            'value': this.getPostmanVariable(thisParams, param, transforms.header),
+                                            'description': thisParams[param].description || '',
+                                            'type': thisParams[param].type || 'string',
+                                            'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
+                                        };
+                                        
+                                        overwroteHeader = true;
+                                        break;
+                                    }
                                 }                            
                             }
 
-                            if (!addedHeader) {
+                            if (!overwroteHeader) {
                                 request.headers.push({
                                     'key': thisParams[param].name,
                                     'value': this.getPostmanVariable(thisParams, param, transforms.header),

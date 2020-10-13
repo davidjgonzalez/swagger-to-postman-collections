@@ -330,7 +330,9 @@ var uuidv4 = require('uuid/v4'),
                     }
                 }
 
-                if (!hasForcedParam) {
+                // Do not add in Accept or Content-Type 
+                if (!hasForcedParam && 
+                        !(forcedParam.in === 'header' && ['Accept', 'Content-Type'].indexOf(forcedParam.name) > -1)) {
                     // Means there was nothing to overwrite of 
                     thisParams[forcedParam.name + "_SwaggerToPostmanForcedParam"] = forcedParam;
                     hasForcedParam = true;

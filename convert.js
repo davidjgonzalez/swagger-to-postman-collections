@@ -318,12 +318,22 @@ var uuidv4 = require('uuid/v4'),
                     continue;
                 }
 
+                var hasForcedParam = false;
                 for (param in thisParams) {
                     if (thisParams[param]) {                        
                         if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
-                            thisParams[param] = forcedParam;                        
+                            hasForcedParam = true;
+                            if (forcedParam.overwrite(apiPathId, path, method)) {
+                                thisParams[param] = forcedParam; 
+                            }
                         }
                     }
+                }
+
+                if (!hasForcedParam) {
+                    // Means there was nothing to overwrite of 
+                    thisParams[forcedParam.name + "_SwaggerToPostmanForcedParam"] = forcedParam;
+                    hasForcedParam = true;
                 }
             };
 

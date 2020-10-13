@@ -289,12 +289,24 @@ var uuidv4 = require('uuid/v4'),
                 thisConsumes = operation.consumes;
             }
             
+            if (thisProduces.length > 0) {                    
+                request.headers.push({
+                    'key': 'Accept',
+                    'value': thisProduces.join(', ') //'application/vnd.adobe.xed+json' 
+                });
+            }
+
+            if (thisConsumes.length > 0) {
+                request.headers.push({
+                    'key': 'Content-Type',
+                    'value': thisConsumes[0] //'application/json'
+                });
+            }            
             // set the default dataMode for this request, even if it doesn't have a body
             // eg. for GET requests
             if (thisConsumes.indexOf('application/x-www-form-urlencoded') > -1) {
                 request.dataMode = 'urlencoded';
             }
-
 
             for (i = 0; i < this.forcedParams.length; i++) {
                 var forcedParam = this.forcedParams[i],
@@ -306,48 +318,20 @@ var uuidv4 = require('uuid/v4'),
                     continue;
                 }
 
-                forcedParam.forced = true;
-
-                var addByForce = true;
                 for (param in thisParams) {
-                    if (thisParams.hasOwnProperty(param) && thisParams[param]) {
+                    if (thisParams[param]) {                        
                         if (thisParams[param].in === forcedParam.in && thisParams[param].name === forcedParam.name) {
-                            if (forcedParam.overwrite(apiPathId, path, method)) {
+                        
+                            if (forcedParam.overwrite(apiPathId, path, method)) {                              
+                                thisParams[param] = forcedParam;                        
                                 break;
                             } else {
-                                addByForce = false;
                                 break;
                             }
                         }
                     }
                 }
-
-                if (addByForce) {
-                    thisParams[forcedParam.id] = forcedParam;
-                }
             };
-
-
-
-            if (thisProduces.length > 0) {
-                console.log(thisParams);
-
-                var acceptHeader = thisParams['accept'];
-
-                if (!acceptHeader || acceptHeader.in !== 'header') {
-                    request.headers.push({
-                        'key': 'Accept',
-                        'value': thisProduces.join(', ') //'application/vnd.adobe.xed+json' 
-                    });
-                }
-            }
-
-            if (thisConsumes.length > 0) {
-                request.headers.push({
-                    'key': 'Content-Type',
-                    'value': thisConsumes[0] //'application/json'
-                });
-            }
 
             // set data and headers
             for (param in thisParams) {
@@ -373,14 +357,35 @@ var uuidv4 = require('uuid/v4'),
                     }
                     else if (thisParams[param].in === 'header') {
                         // Skip these Headers as they are always forced to be what they (removed Accept incase it was forced)
-                        if (['Content-Type'].indexOf(thisParams[param].name) === -1) {                            
-                            request.headers.push({
-                                'key': thisParams[param].name,
-                                'value': this.getPostmanVariable(thisParams, param, transforms.header),
-                                'description': thisParams[param].description || '',
-                                'type': thisParams[param].type || 'string',
-                                'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
-                            });
+                        if (['Content-Type'].indexOf(thisParams[param].name) === -1) {        
+                       
+                            var addedHeader = false;
+                            for (var hi = 0; hi < request.headers.length; hi++) {
+                                if (thisParams[param].name === request.headers[hi].key) {
+
+                                    // Overwrite existing headers
+                                    request.headers[hi] = {
+                                        'key': thisParams[param].name,
+                                        'value': this.getPostmanVariable(thisParams, param, transforms.header),
+                                        'description': thisParams[param].description || '',
+                                        'type': thisParams[param].type || 'string',
+                                        'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
+                                    };
+                                    
+                                    addedHeader = true;
+                                    break;
+                                }                            
+                            }
+
+                            if (!addedHeader) {
+                                request.headers.push({
+                                    'key': thisParams[param].name,
+                                    'value': this.getPostmanVariable(thisParams, param, transforms.header),
+                                    'description': thisParams[param].description || '',
+                                    'type': thisParams[param].type || 'string',
+                                    'enabled': typeof thisParams[param].enabled === 'undefined' ? true : thisParams[param].enabled
+                                });
+                            }
                         }                        
                     }
                     else if (thisParams[param].in === 'body') {

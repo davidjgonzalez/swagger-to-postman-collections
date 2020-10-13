@@ -78,7 +78,6 @@ function execute(inputFilePath, outputDirectory) {
                 }, 
                 forcedParams: [
                     {
-                        id: 'x-sandbox-name',
                         name: 'x-sandbox-name',
                         in: 'header',
                         required: false,
@@ -88,7 +87,6 @@ function execute(inputFilePath, outputDirectory) {
                         overwrite: function() { return false; }
                     },
                     {
-                        id: 'accept',
                         name: 'Accept',
                         description: 'The desired response format (application/vnd.adobe.xed-full+json; version=1). \'Version\' is required.',
                         in: 'header',
@@ -102,7 +100,6 @@ function execute(inputFilePath, outputDirectory) {
                         }
                     },
                     {
-                        id: 'accept',
                         name: 'Accept',
                         description: 'The desired response format (application/vnd.adobe.xed-full+json).',
                         in: 'header',
@@ -161,7 +158,7 @@ pm.request.url.query.remove(q => {
                 if (fs.existsSync(outputFileName)) {
                     fs.unlinkSync(outputFileName);
                 } else {
-                    console.error("Failed to remove existing file  [" + outputFileName + " ]");
+                    //console.error("Failed to remove existing file  [" + outputFileName + " ]");
                 }
 
                 transformer.convert(conversionResult.collection, postmanCollectionTransformerOptions, function (error, result) {
